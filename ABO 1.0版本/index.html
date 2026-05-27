@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ABO人生模拟器</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell console-shell" aria-label="星际联邦民生档案主控台">
+    <header class="panel console-topbar" aria-labelledby="game-title">
+      <div class="console-brand">
+        <h1 id="game-title">星际联邦 · 第七民生档案库 · ABO人生模拟器</h1>
+      </div>
+      <nav class="console-nav" id="consoleNav" aria-label="主控台视图切换">
+        <button class="console-nav__button" type="button" data-console-view="archive">档案</button>
+        <button class="console-nav__button" type="button" data-console-view="map">地图</button>
+        <button class="console-nav__button" type="button" data-console-view="relationships">人际</button>
+        <button class="console-nav__button" type="button" data-console-view="log">日志</button>
+        <button class="console-nav__button" type="button" data-console-view="system">系统</button>
+      </nav>
+    </header>
+
+    <section class="panel console-status-strip" aria-label="当前档案状态">
+      <dl class="console-status-grid">
+        <div>
+          <dt>档案编号</dt>
+          <dd id="archiveId">--</dd>
+        </div>
+        <div>
+          <dt>年龄</dt>
+          <dd id="ageDisplay">--</dd>
+        </div>
+        <div>
+          <dt>季度 / 行动点</dt>
+          <dd id="quarterActionDisplay">--</dd>
+          <dd class="action-point-dots" id="actionPointDots" aria-label="行动点余量"></dd>
+        </div>
+        <div>
+          <dt>第一性别</dt>
+          <dd id="firstGender">--</dd>
+        </div>
+        <div>
+          <dt>第二性别</dt>
+          <dd id="secondGender">--</dd>
+        </div>
+        <div>
+          <dt>出身背景</dt>
+          <dd id="familyTag">--</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="main-stage" aria-label="当前季度主行动台">
+      <article class="panel main-card" aria-labelledby="actions-title">
+        <div class="main-card__header">
+          <div class="section-heading">
+            <p class="eyebrow">Quarterly Loop</p>
+            <h2 id="actions-title">当前季度行动</h2>
+          </div>
+          <p class="main-card__subtitle">选择本季主行动，或打开功能档案读取更完整的地图、人际、日志与系统资料。</p>
+        </div>
+        <p class="note main-card__instruction">每次行动消耗 1 点行动力。行动力归零后，系统自动进入下一季度；分化后新季度还可能触发剧情骰子随机事件。</p>
+        <div class="action-list" id="actionList"></div>
+        <button class="button button--ghost" type="button" id="endQuarterButton">结束本季</button>
+        <p class="note main-log-hint" id="mainLogHint" aria-live="polite">暂无事件记录。</p>
+
+        <article class="console-focus-panel" id="consoleFocusPanel" aria-labelledby="consoleFocusTitle">
+          <div class="section-heading section-heading--compact">
+            <p class="eyebrow" id="consoleFocusKicker">Console Focus</p>
+            <h2 id="consoleFocusTitle">本季提示</h2>
+          </div>
+          <div class="console-focus-body" id="consoleFocusBody" aria-live="polite"></div>
+        </article>
+      </article>
+    </section>
+  </main>
+
+  <dialog class="story-dialog panel feature-dialog" id="archiveDialog" aria-labelledby="archiveDialogTitle" aria-describedby="archiveDialogDescription">
+    <div class="story-dialog__frame feature-dialog__frame">
+      <div class="feature-dialog__header">
+        <div>
+          <p class="eyebrow">Life Dossier</p>
+          <h2 id="archiveDialogTitle">个体生命档案</h2>
+        </div>
+        <button class="button button--ghost story-dialog__close" type="button" data-feature-close>返回主控台</button>
+      </div>
+      <div class="feature-dialog__body" id="archiveDialogDescription">
+        <div class="attribute-grid" id="attributeGrid" aria-label="七项属性" aria-live="polite"></div>
+        <p class="note" id="heritageSummary">等待生成新档案。</p>
+        <section class="console-subpanel" aria-labelledby="parents-title">
+          <div class="section-heading section-heading--compact">
+            <p class="eyebrow">Guardian Registry</p>
+            <h2 id="parents-title">监护档案</h2>
+          </div>
+          <p class="note entry-panel__summary" id="parentSummary">生成新档案后，可打开读取父母或民生署收容档案。</p>
+          <button class="button entry-panel__button" type="button" id="openParentArchiveButton">打开监护档案</button>
+        </section>
+        <section class="console-subpanel" aria-labelledby="life-goals-title">
+          <div class="section-heading section-heading--compact">
+            <p class="eyebrow">Life Goals / Path</p>
+            <h2 id="life-goals-title">阶段目标</h2>
+          </div>
+          <p class="note life-goal-panel__summary" id="lifeGoalSummary">生成新档案后，将显示当前年龄段的人生目标。</p>
+          <div class="life-goal-stage" id="lifeGoalStage" aria-live="polite">等待档案同步</div>
+          <div class="life-goal-list" id="lifeGoalList" aria-live="polite"></div>
+          <div class="section-heading section-heading--compact console-path-heading">
+            <p class="eyebrow">Life Path</p>
+            <h2 id="life-path-title">人生路线</h2>
+          </div>
+          <p class="note life-path-panel__summary" id="lifePathSummary">生成新档案后，将显示当前路线倾向。</p>
+          <div class="life-path-list" id="lifePathList" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel feature-dialog archive-dialog archive-dialog--wide map-dialog" id="mapActionDialog" aria-labelledby="mapActionDialogTitle" aria-describedby="mapActionDialogDescription">
+    <div class="story-dialog__frame feature-dialog__frame">
+      <div class="feature-dialog__header">
+        <div>
+          <p class="eyebrow">Quarter Map / Movement</p>
+          <h2 id="mapActionDialogTitle">季度地图行动</h2>
+        </div>
+        <button class="button button--ghost story-dialog__close" type="button" id="mapActionDialogClose">返回主控台</button>
+      </div>
+      <div class="feature-dialog__body">
+        <p class="note" id="mapActionDialogDescription">选择本季度可前往的地点，再在地点内执行行动或与已认识 NPC 互动。</p>
+        <div class="map-dialog__status" id="mapActionStatus" aria-live="polite"></div>
+        <div class="map-dialog__layout">
+          <div class="map-dialog__locations" id="mapLocationList" aria-label="可前往地图列表"></div>
+          <section class="map-dialog__detail" id="mapLocationDetail" aria-live="polite"></section>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel feature-dialog archive-dialog archive-dialog--wide" id="relationshipDialog" aria-labelledby="relationshipDialogTitle" aria-describedby="relationshipDialogDescription">
+    <div class="story-dialog__frame feature-dialog__frame">
+      <div class="feature-dialog__header">
+        <div>
+          <p class="eyebrow">Relationship Registry</p>
+          <h2 id="relationshipDialogTitle">人际关系界面</h2>
+        </div>
+        <button class="button button--ghost story-dialog__close" type="button" id="relationshipDialogClose">返回主控台</button>
+      </div>
+      <div class="feature-dialog__body" id="relationshipDialogDescription">
+        <p class="note entry-panel__summary" id="relationshipSummary">生成新档案后，将显示主角已认识与可认识的 NPC。</p>
+        <div class="social-schedule" id="socialScheduleList" aria-live="polite"></div>
+        <div class="relationship-grid" id="relationshipGrid" aria-live="polite"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel feature-dialog" id="logDialog" aria-labelledby="logDialogTitle" aria-describedby="logDialogDescription">
+    <div class="story-dialog__frame feature-dialog__frame">
+      <div class="feature-dialog__header">
+        <div>
+          <p class="eyebrow">Event Feed</p>
+          <h2 id="logDialogTitle">日志流</h2>
+        </div>
+        <button class="button button--ghost story-dialog__close" type="button" data-feature-close>返回主控台</button>
+      </div>
+      <div class="feature-dialog__body" id="logDialogDescription">
+        <ol class="event-log" id="eventLog" aria-live="polite"></ol>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel feature-dialog" id="systemDialog" aria-labelledby="systemDialogTitle" aria-describedby="systemDialogDescription">
+    <div class="story-dialog__frame feature-dialog__frame">
+      <div class="feature-dialog__header">
+        <div>
+          <p class="eyebrow">System</p>
+          <h2 id="systemDialogTitle">系统</h2>
+        </div>
+        <button class="button button--ghost story-dialog__close" type="button" data-feature-close>返回主控台</button>
+      </div>
+      <div class="feature-dialog__body system-dialog__body" id="systemDialogDescription">
+        <button class="button button--primary" type="button" id="newLifeButton">随机新人生</button>
+        <div class="dossier-save-slots" id="saveSlotList" role="radiogroup" aria-label="选择本地存档槽">
+          <button class="dossier-save-slot" type="button" data-save-slot="1" role="radio" aria-checked="true">
+            <span>槽位 1</span>
+            <strong>扫描中</strong>
+            <small>等待本地存储响应</small>
+          </button>
+          <button class="dossier-save-slot" type="button" data-save-slot="2" role="radio" aria-checked="false">
+            <span>槽位 2</span>
+            <strong>扫描中</strong>
+            <small>等待本地存储响应</small>
+          </button>
+          <button class="dossier-save-slot" type="button" data-save-slot="3" role="radio" aria-checked="false">
+            <span>槽位 3</span>
+            <strong>扫描中</strong>
+            <small>等待本地存储响应</small>
+          </button>
+        </div>
+        <div class="dossier-save-controls" aria-label="本地档案存取">
+          <button class="button button--ghost" type="button" id="saveLifeButton">保存到所选槽位</button>
+          <button class="button button--ghost" type="button" id="loadLifeButton">读取所选槽位</button>
+        </div>
+        <p class="note dossier-save-status" id="saveLoadStatus" aria-live="polite">本地保存提供三个浏览器存档槽；旧版单槽存档会作为槽位 1 读取。</p>
+        <div class="system-dialog__placeholders" aria-label="系统预留功能">
+          <button class="button button--ghost" type="button" disabled>设置</button>
+          <button class="button button--ghost" type="button" disabled>返回标题</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="action-point-feedback" id="actionPointFeedback" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog class="story-dialog panel time-summary-dialog" id="timeSummaryDialog" aria-labelledby="timeSummaryTitle" aria-describedby="timeSummaryDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="timeSummaryKicker">Time Ledger / Summary</p>
+      <h2 id="timeSummaryTitle">季度总结</h2>
+      <div class="story-dialog__body time-summary-dialog__body" id="timeSummaryDescription"></div>
+      <button class="button button--primary story-dialog__close" type="button" id="timeSummaryClose">继续下一季</button>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel archive-dialog" id="parentArchiveDialog" aria-labelledby="parentArchiveDialogTitle" aria-describedby="parentArchiveDialogDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow">Guardian Registry / Detail</p>
+      <h2 id="parentArchiveDialogTitle">父母 / 监护档案</h2>
+      <div class="story-dialog__body" id="parentArchiveDialogDescription">
+        <p>当前人生的父母、监护或收容档案如下。</p>
+        <div class="parent-grid" id="parentGrid" aria-live="polite"></div>
+      </div>
+      <button class="button button--primary story-dialog__close" type="button" id="parentArchiveDialogClose">返回主控台</button>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="randomNpcDialog" aria-labelledby="randomNpcTitle" aria-describedby="randomNpcDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="randomNpcKicker">随机 NPC 邂逅</p>
+      <h2 id="randomNpcTitle">随机 NPC 邂逅</h2>
+      <div class="story-dialog__body" id="randomNpcDescription"></div>
+      <div class="story-dialog__body" id="randomNpcProfile"></div>
+      <div class="age-story-choices" id="randomNpcChoices" aria-label="随机 NPC 邂逅选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="relationshipStageEventDialog" aria-labelledby="relationshipStageEventTitle" aria-describedby="relationshipStageEventDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="relationshipStageEventKicker">关系阶段事件</p>
+      <h2 id="relationshipStageEventTitle">关系阶段事件</h2>
+      <div class="story-dialog__body" id="relationshipStageEventDescription"></div>
+      <div class="age-story-choices" id="relationshipStageEventChoices" aria-label="关系阶段事件选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="proactiveNpcEventDialog" aria-labelledby="proactiveNpcEventTitle" aria-describedby="proactiveNpcEventDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="proactiveNpcEventKicker">NPC 主动互动</p>
+      <h2 id="proactiveNpcEventTitle">NPC 主动互动</h2>
+      <div class="story-dialog__body" id="proactiveNpcEventDescription"></div>
+      <div class="age-story-choices" id="proactiveNpcEventChoices" aria-label="NPC 主动互动选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="narrativeDiceDialog" aria-labelledby="narrativeDiceTitle" aria-describedby="narrativeDiceDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="narrativeDiceKicker">剧情骰子</p>
+      <h2 id="narrativeDiceTitle">剧情骰子</h2>
+      <div class="story-dialog__body" id="narrativeDiceDescription"></div>
+      <div class="age-story-choices" id="narrativeDiceChoices" aria-label="剧情骰子选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="lifeGoalStoryDialog" aria-labelledby="lifeGoalStoryTitle" aria-describedby="lifeGoalStoryDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="lifeGoalStoryKicker">人生目标剧情</p>
+      <h2 id="lifeGoalStoryTitle">人生目标剧情</h2>
+      <div class="story-dialog__body" id="lifeGoalStoryDescription"></div>
+      <div class="age-story-choices" id="lifeGoalStoryChoices" aria-label="人生目标剧情选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="introDialog" aria-labelledby="introDialogTitle" aria-describedby="introDialogDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow">星际联邦 / 入境导览</p>
+      <h2 id="introDialogTitle">游戏设定说明</h2>
+      <div class="story-dialog__body" id="introDialogDescription">
+        <p>以下是本模拟器采用的 ABO 正式 canon，后续剧情、角色对白与系统提示都以此为准。</p>
+        <div class="canon-list" id="introCanonList" aria-live="polite"></div>
+      </div>
+      <div class="story-dialog__actions" aria-label="设定说明导航">
+        <button class="button" type="button" id="introPrevButton">上一段</button>
+        <button class="button" type="button" id="introSkipButton">跳过</button>
+        <button class="button button--primary" type="button" id="introNextButton">下一段</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="ageStoryDialog" aria-labelledby="ageStoryTitle" aria-describedby="ageStoryDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="ageStoryKicker">年度剧情</p>
+      <h2 id="ageStoryTitle">年度剧情</h2>
+      <div class="story-dialog__body" id="ageStoryDescription"></div>
+      <div class="age-story-choices" id="ageStoryChoices" aria-label="年度剧情选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="quarterStoryDialog" aria-labelledby="quarterStoryTitle" aria-describedby="quarterStoryDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="quarterStoryKicker">幼年季度剧情</p>
+      <h2 id="quarterStoryTitle">季度剧情</h2>
+      <div class="story-dialog__body" id="quarterStoryDescription"></div>
+      <div class="age-story-choices" id="quarterStoryChoices" aria-label="&#24188;&#24180;&#23395;&#24230;&#21095;&#24773;&#36873;&#25321;"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="specialActionDialog" aria-labelledby="specialActionTitle" aria-describedby="specialActionDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="specialActionKicker">家庭专属行动</p>
+      <h2 id="specialActionTitle">家庭专属行动</h2>
+      <div class="story-dialog__body" id="specialActionDescription"></div>
+      <div class="age-story-choices" id="specialActionChoices" aria-label="家庭专属行动选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="attributeThresholdStoryDialog" aria-labelledby="attributeThresholdStoryTitle" aria-describedby="attributeThresholdStoryDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="attributeThresholdStoryKicker">数值达标剧情</p>
+      <h2 id="attributeThresholdStoryTitle">数值达标剧情</h2>
+      <div class="story-dialog__body" id="attributeThresholdStoryDescription"></div>
+      <p class="note" id="attributeThresholdStoryRequirements"></p>
+      <div class="age-story-choices" id="attributeThresholdStoryChoices" aria-label="数值达标剧情选择"></div>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="differentiationDialog" aria-labelledby="differentiationDialogTitle" aria-describedby="differentiationDialogDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow">星际联邦 / 成年觉醒</p>
+      <h2 id="differentiationDialogTitle">18岁成年分化剧情</h2>
+      <div class="story-dialog__body" id="differentiationDialogDescription">
+        <p>时光流转，岁月悄然推至你十八岁成年之年。</p>
+        <p>按照星际联邦律法，所有年满十八的适龄青年，都必须前往官方腺体检测中心，进行成年觉醒与第二性别分化筛查。踏入肃穆的检测舱，周身泛着微凉的星际微光，精密仪器缓缓环绕身躯扫描。</p>
+        <p>忽然间，体内精神力不受控制地翻涌躁动，后颈隐秘的腺体阵阵发烫发麻，一股陌生又强烈的气息在四肢百骸里蔓延开来。体温节节攀升，意识微微恍惚，仿佛有全新的基因枷锁正在被冲破。</p>
+        <p>在星际规则的牵引下，沉寂多年的腺体彻底苏醒，潜藏在血脉深处的第二性别开始挣脱束缚。检测光屏不断跳动数据，你的命运轨迹，也在这一刻，正式完成专属 ABO 的宿命分化。</p>
+      </div>
+      <button class="button button--primary story-dialog__close" type="button" id="differentiationDialogClose">关闭剧情记录</button>
+    </div>
+  </dialog>
+
+  <dialog class="story-dialog panel" id="postDifferentiationStoryDialog" aria-labelledby="postDifferentiationStoryTitle" aria-describedby="postDifferentiationStoryDescription">
+    <div class="story-dialog__frame">
+      <p class="eyebrow" id="postDifferentiationStoryKicker">分化后强制剧情</p>
+      <h2 id="postDifferentiationStoryTitle">分化后强制剧情</h2>
+      <div class="story-dialog__body" id="postDifferentiationStoryDescription"></div>
+      <p class="note" id="postDifferentiationStoryRequirements"></p>
+      <button class="button button--primary story-dialog__close" type="button" id="postDifferentiationStoryClose">记录这段背景</button>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
